@@ -57,8 +57,14 @@ class Wxsendmsg{
 		echo sprintf($template, $toUser, $fromUser, $time, $msgType, $content);
 	}
                 //回复用户关注事件
-	public function responseSubscribe($postObj, $arr){
-		$this->responseNews($postObj,$arr);
+	public function userSubscribe($postObj){
+                                    $result = $this->set_user_money($postObj);//设置用户账号,初始化金额为0.88元
+                                    if($result == 1){
+                                        $content = "";
+                                    }else{
+                                        $content = "";
+                                    }
+                                        $this->responseText($postObj,$content);//回复消息
 	}
                     //取消用户关注事件
 	public function noSubscribe($postObj, $arr){
@@ -72,9 +78,8 @@ class Wxsendmsg{
                     return  $time2 [0];
                   }
                 //生成带参数的二维码
-                public function create_qrcode(){
+                public function create_qrcode($scene_id){
                     $access_token = $this->getWxAccessToken();
-                    $scene_id = $this->get_time();
                     $qrcode = '{"expire_seconds": 604800, "action_name": "QR_SCENE", "action_info": {"scene": {"scene_id": '.$scene_id.'}}}';
                     $ticket_url = 'https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token='.$access_token;
                     $result = $this->https_curl($ticket_url, $qrcode);
@@ -114,7 +119,7 @@ class Wxsendmsg{
                     return $output;
                 }
                 //回复图片消息
-                public function send_qrcode($object, $media_id){
+                public function send_qrcode($postObj, $media_id){
                     $template = "<xml>
                                         <ToUserName><![CDATA[%s]]></ToUserName>
                                         <FromUserName><![CDATA[%s]]></FromUserName>
@@ -133,9 +138,10 @@ class Wxsendmsg{
                 }
                 //上传二维码到临时素材
                 public function add_qrcode($filepath){
+                    $access_token = $this->getWxAccessToken();
                     $type = "image";
                     $filedata = array("file1"  => "@".$filepath);
-                    $url = "http://file.api.weixin.qq.com/cgi-bin/media/upload?access_token=$access_token&type=$type";
+                    $url = "http://file.api.weixin.qq.com/cgi-bin/media/upload?access_token=".$access_token."&type=".$type;
                     $result = https_curl($url, $filedata);
                     $info = json_decode($result, TRUE);
                     if(!isset($info['media_id'])){
@@ -143,10 +149,20 @@ class Wxsendmsg{
                     }
                     return array('code'=>1, 'media_id'=>$info['media_id']);
                 }
-                //从素材库中获取二维码
-                public function get_qrcode($media_id){
-                    
-                    
+                //设置用户账号
+                /*
+                 * 如果该用户未曾关注公众号则正常初始化用户账户,生成$scene_id,初始化金额.
+                 * 如果该用户关注过公众号(表中已有该用户且账户状态为取消关注),则变更账户状态为正常,金额不变.
+                 */
+                public function set_user_money($object){
+                    $this->load->model('user_model','user');
+                    $result = $this->user->check($object->FromUserName);//检查用户是否未曾关注公众号
+                    if($result){
+                        $data = $this->user->set_user_money($object);
+                    }else{
+                        $data = $this->user->update_user_money($object);
+                    }
+                    return $data;
                 }
 }
 
