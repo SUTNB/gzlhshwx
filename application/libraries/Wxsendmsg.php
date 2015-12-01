@@ -60,15 +60,16 @@ class Wxsendmsg{
 	public function userSubscribe($postObj){
                                     $result = $this->set_user_money($postObj);//设置用户账号,初始化金额为0.88元
                                     if($result == 1){
-                                        $content = "";
+                                        $content = "欢迎关注";
                                     }else{
-                                        $content = "";
+                                        $content = "欢迎回来";
                                     }
                                         $this->responseText($postObj,$content);//回复消息
 	}
                     //取消用户关注事件
-	public function noSubscribe($postObj, $arr){
-		
+	public function unSubscribe($postObj, $arr){
+		$this->load->model('user_model','user');
+                                   $this->set_user_status($postObj);//设置用户为取消关注
 	}
                   //获取毫秒时间戳
                   function get_time(){
