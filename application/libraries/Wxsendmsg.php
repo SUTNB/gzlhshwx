@@ -14,6 +14,7 @@ class Wxsendmsg{
 		//1.请求url地址
                                    $mem = new Memcache(); //创建Memcache对象  
 		$mem->connect('127.0.0.1', 11211); //连接Memcache服务器
+                                   $mem->delete(md5("access_token"));
 		if(!($data=$mem->get(md5("access_token")))){
                                                     $data = $this->getWxAccessTokenBycurl();
                                                     $mem->set(md5("access_token"), $data, 0, $data['expires_in']);
@@ -56,20 +57,12 @@ class Wxsendmsg{
 		$msgType  = 'text';
 		echo sprintf($template, $toUser, $fromUser, $time, $msgType, $content);
 	}
-                //回复用户关注事件
-	public function userSubscribe($postObj){
-                                    $result = $this->set_user_money($postObj);//设置用户账号,初始化金额为0.88元
-                                    if($result == 1){
-                                        $content = "欢迎关注";
-                                    }else{
-                                        $content = "欢迎回来";
-                                    }
-                                        $this->responseText($postObj,$content);//回复消息
-	}
+        
+
                     //取消用户关注事件
 	public function unSubscribe($postObj, $arr){
 		$this->load->model('user_model','user');
-                                   $this->set_user_status($postObj);//设置用户为取消关注
+                                   $this->update_user_status($postObj, 3);//设置用户为取消关注(3)
 	}
                   //获取毫秒时间戳
                   function get_time(){
@@ -95,7 +88,7 @@ class Wxsendmsg{
                     if(false !== $local_file){
                         if(false !== fwrite($local_file, $imageinfo)){
                             fclose($local_file);
-                            return array('code' => 1, 'url' => $filename, 'scene_id' => $scene_id);
+                            return ['code' => 1, 'url' => $filename, 'scene_id' => $scene_id];
                         }
                         return array('code'=>-3, 'message' => '写入文件失败' );
                     }
@@ -138,32 +131,27 @@ class Wxsendmsg{
 		echo sprintf($template, $toUser, $fromUser, $time, $msgType, $media_id);
                 }
                 //上传二维码到临时素材
-                public function add_qrcode($filepath){
-                    $access_token = $this->getWxAccessToken();
+                public function upload_qrcode($filepath){
+                    $access_token = $this->getWxAccessToken(); 
                     $type = "image";
-                    $filedata = array("file1"  => "@".$filepath);
-                    $url = "http://file.api.weixin.qq.com/cgi-bin/media/upload?access_token=".$access_token."&type=".$type;
-                    $result = https_curl($url, $filedata);
+                    $filedata = array("media"  => "@".$filepath);
+                    $url = "http://file.api.weixin.qq.com/cgi-bin/media/upload?access_token=".$access_token."&type=".$type; 
+                    $result = $this->https_curl($url, $filedata);
                     $info = json_decode($result, TRUE);
                     if(!isset($info['media_id'])){
-                        return array('code'=>-1, '上传失败');
+                        return array('code'=>-1, 'message'=>'上传失败');
                     }
                     return array('code'=>1, 'media_id'=>$info['media_id']);
                 }
-                //设置用户账号
-                /*
-                 * 如果该用户未曾关注公众号则正常初始化用户账户,生成$scene_id,初始化金额.
-                 * 如果该用户关注过公众号(表中已有该用户且账户状态为取消关注),则变更账户状态为正常,金额不变.
-                 */
-                public function set_user_money($object){
-                    $this->load->model('user_model','user');
-                    $result = $this->user->check($object->FromUserName);//检查用户是否未曾关注公众号
-                    if($result){
-                        $data = $this->user->set_user_money($object);
-                    }else{
-                        $data = $this->user->update_user_money($object);
-                    }
-                    return $data;
+                //客服回复文本接口
+                public function responseTextBycustom($openid, $content){
+                $txt = '{ "touser" :"'. $openid.'","msgtype" : "text" ,'.'"text": {"content": "'.$content.'"} }';
+                $access_token = $this->getWxAccessToken(); 
+                $url = "https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=".$access_token;
+                $result = $this->https_curl($url, $txt);
+                $info = json_decode($result, TRUE);
+                        return array('code'=>$info['errcode'], 'errmsg'=>$info['errmsg']);
                 }
+                     
 }
 

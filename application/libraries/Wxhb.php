@@ -7,7 +7,7 @@
  *$result = $this->pay($postObj->FromUserName);
  * 
  */	
-require 'mywxconfig.php';
+//require 'mywxconfig.php';
 class Wxhb{
     public $mch_id = MCH_ID;//商户Id
     public $wxappid = WXAPPID;//公众账号ID

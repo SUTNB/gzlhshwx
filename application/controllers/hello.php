@@ -1,14 +1,15 @@
-<?php
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 class Hello extends CI_Controller{
     public function __construct() {
         parent::__construct();
         $this->load->library('wxsendmsg');
+        //$this->load->model('user_model');
         //$this->wxsendmsg->getWxAccessToken();die;
     }
     public function index(){          
-                                    $result = $this->wxsendmsg->create_qrcode();
-		if($result['code'] != 1)
-                                            echo $result['message'];die;
+//                                    $result = $this->wxsendmsg->create_qrcode();
+//		if($result['code'] != 1)
+//                                            echo $result['message'];die;
                                     //获得参数 signature nonce token timestamp echostr
 		$nonce     = $_GET['nonce'];
 		$token      = TOKEN;
@@ -34,13 +35,6 @@ class Hello extends CI_Controller{
 		//1.获取到微信推送过来post数据（xml格式）
 		$postArr = $GLOBALS['HTTP_RAW_POST_DATA'];
 		//2.处理消息类型，并设置回复类型和内容
-		/*<xml>
-		<ToUserName><![CDATA[toUser]]></ToUserName>
-		<FromUserName><![CDATA[FromUser]]></FromUserName>
-		<CreateTime>123456789</CreateTime>
-		<MsgType><![CDATA[event]]></MsgType>
-		<Event><![CDATA[subscribe]]></Event>
-		</xml>*/
 		$postObj = simplexml_load_string( $postArr );
 		//$postObj->ToUserName = '';
 		//$postObj->FromUserName = '';
@@ -53,53 +47,51 @@ class Hello extends CI_Controller{
 			//如果是关注 subscribe 事件
 			if( strtolower($postObj->Event == 'subscribe') ){
 				//回复用户消息(纯文本格式)	
-				$toUser   = $postObj->FromUserName;
-				$fromUser = $postObj->ToUserName;
-				$time     = time();
-				$msgType  =  'text';
-				$content  = '欢迎关注我们的微信公众账号';
-				$template = "<xml>
-							<ToUserName><![CDATA[%s]]></ToUserName>
-							<FromUserName><![CDATA[%s]]></FromUserName>
-							<CreateTime>%s</CreateTime>
-							<MsgType><![CDATA[%s]]></MsgType>
-							<Content><![CDATA[%s]]></Content>
-							</xml>";
-				$info     = sprintf($template, $toUser, $fromUser, $time, $msgType, $content);
-				echo $info;
-				/*<xml>
-				<ToUserName><![CDATA[toUser]]></ToUserName>
-				<FromUserName><![CDATA[fromUser]]></FromUserName>
-				<CreateTime>12345678</CreateTime>
-				<MsgType><![CDATA[text]]></MsgType>
-				<Content><![CDATA[你好]]></Content>
-				</xml>*/
-			
-
+                                                                      $result_user = $this->set_user_money($postObj);
+                                                                      if($result_user['code'] == -1){
+                                                                          $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $result_user['message']);
+                                                                          return;
+                                                                      }
+                                                                      $content1 = "欢迎关注我们的微信公众平台";
+                                                                      $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $content1);
+                                                                      if(isset($result_user['fopenid'])){
+                                                                          $content2 = "有一位好友通过你的二维码关注了我们的微信平台,奖励你0.08元";
+                                                                          $this->wxsendmsg->responseTextBycustom($result_user['fopenid'], $content2);
+                                                                      }
 			}
-	}
-	if(strtolower($postObj->MsgType) == 'text' && trim($postObj->Content)=='红包测试'){
-                                                                      $this->load->library('wxhb');
-				$result = $this->wxhb->pay($postObj->FromUserName,100);
+                        if( strtolower($postObj->Event == 'unsubscribe') ){
+                                    $this->load->library('user_model');
+                                    $result_user = $this->set_user_money($postObj);
+                                     if($result_user['code'] == -1){
+                                        return;
+                                      }
+                                    $this->user_model->update_user_status($postObj->FromUserName, 3);//设置用户状态为取消关注
+                        }
+	}if(strtolower($postObj->MsgType) == 'text' && trim($postObj->Content)=='领取红包'){
+            
+            $content1 = "欢迎关注我们的微信公众平台";
+            $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $content1);        
+        }else if(strtolower($postObj->MsgType) == 'text' && trim($postObj->Content)=='生成二维码'){
+                                                                     //$this->load->library('user_model');
+				//$result = $this->wxhb->pay($postObj->FromUserName,100);
+                                                                    $result_user = $this->set_user_money($postObj);
+                                                                      if($result_user['code'] == -1){
+                                                                          $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $result_user['message']);
+                                                                          return;
+                                                                      }
+                                                                      $content = "二维码正在生成中........请稍后";
+                                                                      $result1 = $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $content);//客服接口发送文本消息
+                                                                      if($result1['errcode'] == 0){
+                                                                                $result2 = $this->create_send_poster($postObj);//生成并发送二维码
+                                                                      }else {
+                                                                                $error = "系统错误!请稍后再试!";
+                                                                                $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $error);//客服接口发送文本消息
+                                                                     }
 				//$result = '服务号正在维护升级,给你带来的不便敬请谅解,后续将会有更多功能上线,让我们拭目以待!';
-				//注意模板中的中括号 不能少 也不能多
-				$template = "<xml>
-					<ToUserName><![CDATA[%s]]></ToUserName>
-					<FromUserName><![CDATA[%s]]></FromUserName>
-					<CreateTime>%s</CreateTime>
-					<MsgType><![CDATA[%s]]></MsgType>
-					<Content><![CDATA[%s]]></Content>
-					</xml>";
-				$fromUser = $postObj->ToUserName;
-				$toUser   = $postObj->FromUserName; 
-				$time     = time();
-				$msgType  = 'text';
-				echo sprintf($template, $toUser, $fromUser, $time, $msgType, $result);
-
-		}else{
+		}else if(strtolower($postObj->MsgType) == 'text'){
 			switch( trim($postObj->Content) ){
 				case 1:
-					$content = '您输入的数字是1'.$postObj->FromUserName.'-'.$postObj->ToUserName;;
+					$content = '您输入的数字是1';
 				break;
 				case 2:
 					$content = '您输入的数字是2';
@@ -115,23 +107,85 @@ class Hello extends CI_Controller{
 				break;
 				default :$content = '服务号正在维护升级,给你带来的不便敬请谅解,后续将会有更多功能上线,让我们拭目以待!';
 			}	
-				$template = "<xml>
-<ToUserName><![CDATA[%s]]></ToUserName>
-<FromUserName><![CDATA[%s]]></FromUserName>
-<CreateTime>%s</CreateTime>
-<MsgType><![CDATA[%s]]></MsgType>
-<Content><![CDATA[%s]]></Content>
-</xml>";
-//注意模板中的中括号 不能少 也不能多
-				$fromUser = $postObj->ToUserName;
-				$toUser   = $postObj->FromUserName; 
-				$time     = time();
-				// $content  = '18723180099';
-				$msgType  = 'text';
-				echo sprintf($template, $toUser, $fromUser, $time, $msgType, $content);
-			
+                                        $this->wxsendmsg->responseText($postObj, $content);	
 		}//if end
 	}//reponseMsg end
-	
+                //设置用户账号
+                /*
+                 * 如果该用户未曾关注公众号则正常初始化用户账户,生成$scene_id,初始化金额.
+                 * 如果该用户关注过公众号(表中已有该用户且账户状态为取消关注),则变更账户状态为正常,金额不变.
+                 */
+                public function set_user_money($object){
+                    //return array('code'=> -5, 'message'=>"测试");
+                    $this->load->library('user_model');
+                    //return array('code'=> -5, 'message'=>"测试");
+                    $result = $this->user_model->check($object->FromUserName);//检查用户是否未曾关注公众号
+                    if($result['code'] == 1){
+                        $data = $this->user_model->set_user_money($object);
+                    }else if($result['code'] ==  2){
+                        $data = $this->user_model->update_user_status($object->FromUserName, 1);
+                    }elseif($result['code'] ==  3){
+                        $data = array('code'=> 8, 'message'=>$result['message']);
+                    }else{
+                        $data = array('code'=> -1, 'message'=>'您的账号存在违规操作,已被冻结.如有问题请联系客服');
+                    }
+                    return $data;
+                }     
+                  //申请提现
+	public function applpay($postObj){
+                             $this->load->library('user_model');
+                             $result = $this->user_model->check($postObj->FromUserName);//检查用户类型
+                             if($result['code'] == 1){
+                                 $content = "您尚未参与我们的活动!";
+                             }elseif($result['code'] == -1){
+                                 $content = "您的账号存在违规操作,已被冻结.如有问题请联系客服";
+                             }elseif($result['code'] == 3){//用户账户正常
+                                 
+                             }
+	}
+        public function sec2str($sec){
+            return sprintf("%02d:%02d:%02d",$sec/3600,$sec%3600/60,$sec%60);
+        }
+
+        //生成海报
+                public function create_send_poster($postObj){
+                    //$this->wxsendmsg->upload_qrcode();
+                    $this->load->library('user_model');
+                    $data = $this->user_model->get_userinfo($postObj->FromUserName);//$postObj->FromUserName
+                    if($data['time'] === \NULL ||time() - strtotime($data['time']) > 7*24*60*60){  
+                        $save_result = $this->user_model->set_userinfo($postObj->FromUserName, '123465','13246');
+                        $result_create = $this->wxsendmsg->create_qrcode($data['scene_id']);
+                        if($result_create['code'] == 1){
+                            $result_upload = $this->wxsendmsg->upload_qrcode($result_create['url']); 
+                            if($result_upload['code'] == 1){
+                                //return array('code'=>-3,'message'=>'debug');
+                                $save_result = $this->user_model->set_userinfo($postObj->FromUserName, $result_create['url'], $result_upload['media_id']);
+                                //return array('code'=>-3,'message'=>'debug');
+                                //return array('code'=>-2,'message'=>$save_result['message']);
+                                if($save_result['code'] == 1){
+                                    $this->wxsendmsg->send_qrcode($postObj, $result_upload['media_id']);//发送二维码
+                                }else{
+                                    return array('code'=>-3,'message'=>$save_result['message']);
+                                }
+                            }else{
+                                return array('code'=>-2,'message'=>$result_upload['message']);
+                            }
+                        }else{
+                            return array('code'=>-1,'message'=>$result_create['message']);
+                        }
+                    }else if (time() - strtotime($data['time']) < 3*24*60*60) {
+                        $this->wxsendmsg->send_qrcode($postObj, $data['media_id']);//发送二维码
+                 }else if (time() - strtotime($data['time']) < 7*24*60*60 && time() - strtotime($data['time']) > 3*24*60*60) {
+                       $result_upload = $this->wxsendmsg->upload_qrcode($data['qrcode_url']);
+                            if($result_upload['code'] == 1){
+                                $save_result = $this->user_model->update_userinfo($postObj->FromUserName, $result_upload['media_id']);
+                                if($save_result['code'] == 1){
+                                    $this->wxsendmsg->send_qrcode($postObj, $result_upload['media_id']);//发送二维码
+                                }else{
+                                    return array('code'=>-3,'message'=>$save_result['message']);
+                                }
+                           }
+                        }
+                }
 }
-?>
+
