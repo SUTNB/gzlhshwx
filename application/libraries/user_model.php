@@ -71,21 +71,28 @@ class User_model{
     /*
      * 查询金额是否满足提现
      */
-    public function check_money($openid, $money){
-        $sql1 = "SELECT money FROM user_money where  openid='".$openid."'";
-        $query1 = mysql_query($sql1);
-        $row1 = mysql_fetch_assoc($query1);
-        if($row1['money'] >= $money){
-                 $sql2 = "SELECT count(*) FROM apply_getmoney where  openid='".$openid."'and (status = 1 or status = 4)";
-                 $result = mysql_query($sql2);
-                 $query2 = mysql_fetch_assoc($result);
-                 if($query2['count(*)'] == 0){
-                     return array('code'=>1, 'message' =>'可以提现');
-                 } else{
-                     return array('code'=>-2,'message'=>'已提交提现申请,请耐心等待');
-                 }
+    public function check_money($openid){
+        $sql1 = "SELECT count(*) FROM apply_getmoney where  openid='".$openid."'and (status = 1 or status = 4)";
+        $result1 = mysql_query($sql1);
+        $query1 = mysql_fetch_assoc($result1);
+        if($query1['count(*)'] == 0){
+                $sql2 = "SELECT count(*) FROM apply_getmoney where  openid='".$openid."'and status = 3";
+                $result2 = mysql_query($sql2);
+                $query2 = mysql_fetch_assoc($result2);
+                if($query2['count(*)'] == 0){
+                        $sql3 = "SELECT money FROM user_money where  openid='".$openid."' limit 1";
+                        $result3 = mysql_query($sql3);
+                        $query3 = mysql_fetch_assoc($result3);
+                         if($query3['money'] >= 100){
+                                return array('code'=>1, 'message' =>'可以提现','money'=>$query3['money']);
+                        }else{
+                                return array('code'=>-1,'message'=>'金额不足');
+                        }		
+                }else{
+                        return array('code'=>-3, 'message' =>'提现已被拒绝');
+                }
         }else{
-                return array('code'=>-1,'message'=>'金额不足');
+                return array('code'=>-2,'message'=>'已提交提现申请,请耐心等待');
             }
     }
     /*
@@ -93,13 +100,12 @@ class User_model{
      */
     public function app_money($openid, $money){
         $note_id = md5(time());
-        $format = 'DATE_W3C';
-        $sub_time = standard_date($format, time());
-        $status = 1;
-        $sql1 = "INSERT INTO apply_getmoney (note_id, openid, money, status) VALUES (".$note_id.", '".$openid."',".$money.",".$sub_time.",".$status.")";
-        $sql2 = "UPDATE user_money SET money= money-".$money." where openid='".$openid."'";
+        $status = 1;//等待审核
+        $sql1 = "UPDATE user_money SET money= money-".$money." where openid='".$openid."'";
         $result1 = mysql_query($sql1);
-        $result2 = mysql_query($sql2);
+        $sql2 = "INSERT INTO apply_getmoney (note_id, openid, money, sub_time, status) VALUES ('".$note_id."', '".$openid."',".$money.", NOW(),'".$status."')";
+        if($result1)
+            $result2 = mysql_query($sql2);
         if($result1 && $result2){
             return true;
         }else{
@@ -110,7 +116,7 @@ class User_model{
      * 修改提现状态
      */
     public function set_app_status($note_id, $status){
-        $sql = "UPDATE user_money SET status= ".$status." where note_id=".$note_id;
+        $sql = "UPDATE apply_getmoney SET status= ".$status." where note_id='".$note_id."'";
         $result = mysql_query($sql);
         if($result){
             return true;
@@ -151,6 +157,42 @@ class User_model{
         }else{
             return array('code'=>-2, 'message'=>'设置失败');
         }
+    }
+    /*
+     * 获取申请信息
+     */
+    public function get_appmoney(){
+        $sql = "SELECT apply_id, openid,note_id, money, sub_time FROM apply_getmoney where status = 1";
+        $result = mysql_query($sql);
+        $data = array();
+        while ($row = mysql_fetch_array($result,MYSQL_ASSOC)) {
+	$data[] = $row;
+        }
+        return $data;
+    }
+    /*
+     * 获取已审核过的列表
+     */
+    public function get_appedmoney(){
+        $sql = "SELECT apply_id, openid,note_id, money, sub_time, status FROM apply_getmoney where status != 1";
+        $result = mysql_query($sql);
+        $data = array();
+        while ($row = mysql_fetch_array($result,MYSQL_ASSOC)) {
+	$data[] = $row;
+        }
+        return $data;
+    }
+    /*
+     * 获取所有用户列表
+     */
+    public function get_usermoney(){
+        $sql = "SELECT * FROM user_money";
+        $result = mysql_query($sql);
+        $data = array();
+        while ($row = mysql_fetch_array($result,MYSQL_ASSOC)) {
+	$data[] = $row;
+        }
+        return $data;
     }
 }
 

@@ -7,14 +7,14 @@
  *$result = $this->pay($postObj->FromUserName);
  * 
  */
-require 'mywxconfig.php';
+require 'wxsendconfig.php';
 //获取access_token
 class Wxsendmsg{
     function getWxAccessToken(){
 		//1.请求url地址
                                    $mem = new Memcache(); //创建Memcache对象  
 		$mem->connect('127.0.0.1', 11211); //连接Memcache服务器
-                                   $mem->delete(md5("access_token"));
+                                   //$mem->delete(md5("access_token"));
 		if(!($data=$mem->get(md5("access_token")))){
                                                     $data = $this->getWxAccessTokenBycurl();
                                                     $mem->set(md5("access_token"), $data, 0, $data['expires_in']);
@@ -151,6 +151,14 @@ class Wxsendmsg{
                 $result = $this->https_curl($url, $txt);
                 $info = json_decode($result, TRUE);
                         return array('code'=>$info['errcode'], 'errmsg'=>$info['errmsg']);
+                }
+                //获取用户详细信息
+                public function get_userinfo($openid){
+                    $access_token = $this->getWxAccessToken(); 
+                    $url = "https://api.weixin.qq.com/cgi-bin/user/info?access_token=".$access_token."&openid=".$openid;
+                    $result = $this->https_curl($url);
+                    $info = json_decode($result, TRUE);
+                    return $info;
                 }
                      
 }

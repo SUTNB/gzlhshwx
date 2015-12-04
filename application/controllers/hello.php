@@ -7,10 +7,6 @@ class Hello extends CI_Controller{
         //$this->wxsendmsg->getWxAccessToken();die;
     }
     public function index(){          
-//                                    $result = $this->wxsendmsg->create_qrcode();
-//		if($result['code'] != 1)
-//                                            echo $result['message'];die;
-                                    //获得参数 signature nonce token timestamp echostr
 		$nonce     = $_GET['nonce'];
 		$token      = TOKEN;
 		$timestamp = $_GET['timestamp'];
@@ -67,13 +63,21 @@ class Hello extends CI_Controller{
                                       }
                                     $this->user_model->update_user_status($postObj->FromUserName, 3);//设置用户状态为取消关注
                         }
-	}if(strtolower($postObj->MsgType) == 'text' && trim($postObj->Content)=='领取红包'){
-            
-            $content1 = "欢迎关注我们的微信公众平台";
-            $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $content1);        
-        }else if(strtolower($postObj->MsgType) == 'text' && trim($postObj->Content)=='生成二维码'){
-                                                                     //$this->load->library('user_model');
-				//$result = $this->wxhb->pay($postObj->FromUserName,100);
+	}
+        else if(strtolower($postObj->MsgType) == 'text' && trim($postObj->Content)=='领取红包'){
+            $this->load->library('user_model');
+            $result = $this->applpay($postObj);//检查账户是否符合要求
+            if($result['code'] == 1){
+                $money  = floor($result['money']/100) *100;//只取整数
+                $result_act = $this->user_model->app_money($postObj->FromUserName, $money);
+                if($result_act)
+                    $this->wxsendmsg->responseText($postObj, $result_act);
+            }
+        }
+        else if(strtolower($postObj->MsgType) == 'text' && trim($postObj->Content)=='生成二维码'){
+//                                                                    $this->load->library('wxhb');
+//				$result = $this->wxhb->pay($postObj->FromUserName,100);
+                                                                    //$this->wxsendmsg->responseText($postObj,$result);
                                                                     $result_user = $this->set_user_money($postObj);
                                                                       if($result_user['code'] == -1){
                                                                           $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $result_user['message']);
@@ -88,7 +92,7 @@ class Hello extends CI_Controller{
                                                                                 $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $error);//客服接口发送文本消息
                                                                      }
 				//$result = '服务号正在维护升级,给你带来的不便敬请谅解,后续将会有更多功能上线,让我们拭目以待!';
-		}else if(strtolower($postObj->MsgType) == 'text'){
+		}else{
 			switch( trim($postObj->Content) ){
 				case 1:
 					$content = '您输入的数字是1';
@@ -137,10 +141,20 @@ class Hello extends CI_Controller{
                              $result = $this->user_model->check($postObj->FromUserName);//检查用户类型
                              if($result['code'] == 1){
                                  $content = "您尚未参与我们的活动!";
+                                 $this->wxsendmsg->responseText($postObj, $content);
+                                 return false;
                              }elseif($result['code'] == -1){
                                  $content = "您的账号存在违规操作,已被冻结.如有问题请联系客服";
-                             }elseif($result['code'] == 3){//用户账户正常
-                                 
+                                 $this->wxsendmsg->responseText($postObj, $content);
+                                 return false;
+                             }elseif($result['code'] == 3){//用户账户正常.开始检查金额是否不足,是否已经提交申请,是否已被拒绝
+                                 $result_apply = $this->user_model->check_money($postObj->FromUserName);
+                                 if($result_apply['code'] != 1){
+                                     $this->wxsendmsg->responseText($postObj, $result_apply['message']);
+                                     return false;
+                                 }else{//操作数据库
+                                     return $result_apply;
+                                 }
                              }
 	}
         public function sec2str($sec){

@@ -7,7 +7,7 @@
  *$result = $this->pay($postObj->FromUserName);
  * 
  */	
-//require 'mywxconfig.php';
+require 'wxhbconfig.php';
 class Wxhb{
     public $mch_id = MCH_ID;//商户Id
     public $wxappid = WXAPPID;//公众账号ID
@@ -70,6 +70,7 @@ class Wxhb{
 	 */     
 	public function great_rand(){
 	    $str = '1234567890abcdefghijklmnopqrstuvwxyz';
+                      $t1 = '';
 	    for($i=0;$i<30;$i++){
 		$j=rand(0,35);
 		$t1 .= $str[$j];
@@ -92,17 +93,17 @@ class Wxhb{
 	9CF3B7"
 	*/
 	protected function get_sign($data){
-	    	$key = "qazxswedcvfrtgbnhyujm123456789ik";
+	    	$key = "niubenkaifagzlhshweixinpingtai12";
 		ksort($data);
+                                  //return $data;
 		$stringA = '';
-		$i=0;
 		foreach($data as $k => $v) :
 			$stringA .= $k."=".$v.'&';
 		endforeach;
 		//return $stringA;
 		$stringSignTemp = $stringA.'key='.$key;
+                                   //return $stringSignTemp;
 		return strtoupper(md5($stringSignTemp));
- 
 	}
       /**
      * 微信支付
@@ -119,11 +120,11 @@ class Wxhb{
 	$data['act_name'] = $this->act_name;//活劢名称
 	$data['remark'] = $this->remark;//备注信息
 	$data['client_ip'] = $this->client_ip;//调用接口的机器 Ip 地址
-	$data['wishing'] = "祝我测试成功!";//红包祝福诧
+	$data['wishing'] = $this->wishing;//红包祝福诧
 	$data['total_num'] = 1;//红包数
 	$data['re_openid'] = $re_openid;
 	$sign = $this->get_sign($data);
-	//return $sign;
+	//return $sign.'----'.$data['nonce_str'].'----'.$data['mch_billno'];
 	$template = "<xml>
 	<sign><![CDATA[%s]]></sign>
 	<mch_billno><![CDATA[%s]]></mch_billno>
@@ -131,8 +132,8 @@ class Wxhb{
 	<wxappid><![CDATA[%s]]></wxappid>
 	<send_name><![CDATA[%s]]></send_name>
 	<re_openid><![CDATA[%s]]></re_openid>
-	<total_amount><![CDATA[%d]]></total_amount>
-	<total_num><![CDATA[%d]]></total_num>
+	<total_amount><![CDATA[%s]]></total_amount>
+	<total_num><![CDATA[%s]]></total_num>
 	<wishing><![CDATA[%s]]></wishing>
 	<client_ip><![CDATA[%s]]></client_ip>
 	<act_name><![CDATA[%s]]></act_name>
@@ -143,7 +144,11 @@ class Wxhb{
 	$url = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/sendredpack';
 	//$objet = simplexml_load_string($postXml);
 	//return  $objet->wxappid;
-	$responseXml = $this->curl_post_ssl($url, $postXml);	
+                 $this_header = array(
+                    "content-type: application/x-www-form-urlencoded; 
+                    charset=UTF-8"
+                );
+	$responseXml = $this->curl_post_ssl($url, $postXml, 30, $this_header);
                 //用作结果调试输出
 	/*if($responseXml)
 	{
@@ -153,7 +158,7 @@ class Wxhb{
 	}*/
                 //echo htmlentities($responseXml,ENT_COMPAT,'UTF-8');
     	$responseObj = simplexml_load_string($responseXml, 'SimpleXMLElement', LIBXML_NOCDATA);
-    	return $responseObj->return_msg;
+    	return $responseObj->return_code;
 	//return "测试";
     }	
 }
