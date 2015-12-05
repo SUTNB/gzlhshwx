@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>提现申请</title>
+    <title>提现申请审核</title>
     <link href="<?= base_url('application/views/css/bootstrap.min.css');?>" rel="stylesheet">
     <script src="<?= base_url('application/views/js/jquery-1.9.1.min.js');?>"></script>
     <script src="<?= base_url('application/views/js/bootstrap.min.js');?>"></script>
@@ -54,16 +54,16 @@
 <div class="span6">
 <ul class="nav nav-tabs">
 <li><a href="<?php echo site_url().'/admin/index';?>">申请列表</a> </li> 
-<li class="active"><a href="<?php echo site_url().'/admin/acceptlist';?>">已通过</a></li>
+<li class="active"><a href="<?php echo site_url().'/admin/acceptlist';?>">已审核</a></li>
 <li><a href="<?php echo site_url().'/admin/userlist';?>">账户列表</a></li> 
-<li><a href="<?php echo site_url().'/admin/freeze';?>">已冻结</a></li> 
+<li><a href="<?php echo site_url().'/admin/freeze';?>">已冻结账户</a></li> 
 </ul>
 </div>
 </div>
 </div>
 <div class="user_info">
 <center>
-    <h2>提现申请列表</h2>
+    <h2>已审核列表</h2>
 <table class="table table-bordered table-hover">
   <thead>
   <tr class="th_class">
@@ -77,18 +77,25 @@
 </thead>
 
 <tbody>
-     <?php foreach($applyed as $v): ?>
+     <?php foreach($applyed as $v){ ?>
  <tr>
   <td><?= $v['apply_id'];?></td>
-  <td><img src="<?= $v['headimgurl'].'132';?>"  height='80' width='80' /></td>
+  <?php if($v['yn'] != 3){ ?>
+  <td><img src="<?= $v['headimgurl'].'132';?>"  height='60' width='60' /></td>
   <td><?= $v['nickname'];?></td>
   <td><?= $v['area'];?></td>
+  <?php }else{ ?>
+  <td>已取消关注</td>
+  <td>已取消关注</td>
+  <td>已取消关注</td>
+  <?php } ?>
   <td style="color:red"><?= $v['money']/100;?></td>
   <td>
       <button type="button" class="<?php echo $status[$v['status']]?>" ><?=$info[$v['status']];?></button>
   </td>
  </tr>
- <?php endforeach;?>
+ <?php }?>
+</tbody>
 </table>
 </center>
 </div>

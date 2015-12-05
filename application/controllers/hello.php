@@ -51,7 +51,9 @@ class Hello extends CI_Controller{
                                                                       $content1 = "欢迎关注我们的微信公众平台";
                                                                       $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $content1);
                                                                       if(isset($result_user['fopenid'])){
-                                                                          $content2 = "有一位好友通过你的二维码关注了我们的微信平台,奖励你0.08元";
+                                                                          $user_info = $this->wxsendmsg->get_userinfo($postObj->FromUserName);
+                                                                          $result_user['money'] = $result_user['money']/100;
+                                                                          $content2 = "您的好友  ".$user_info['nickname']."  通过你的二维码关注了我们的微信平台,奖励你0.24元,您目前的余额为: ".$result_user['money']."元";
                                                                           $this->wxsendmsg->responseTextBycustom($result_user['fopenid'], $content2);
                                                                       }
 			}
@@ -69,9 +71,12 @@ class Hello extends CI_Controller{
             $result = $this->applpay($postObj);//检查账户是否符合要求
             if($result['code'] == 1){
                 $money  = floor($result['money']/100) *100;//只取整数
+                $surplus =  $result['money'] - $money;//计算余额
                 $result_act = $this->user_model->app_money($postObj->FromUserName, $money);
-                if($result_act)
-                    $this->wxsendmsg->responseText($postObj, $result_act);
+                if($result_act){
+                    $user_money_info = "申请成功,由于系统问题,红包只能发放整数部分,我们将在24小时内,发放红包给你,请注意查收!  您账户的当前余额为:".($surplus/100)."元";
+                    $this->wxsendmsg->responseText($postObj, $user_money_info);
+                }
             }
         }
         else if(strtolower($postObj->MsgType) == 'text' && trim($postObj->Content)=='生成二维码'){

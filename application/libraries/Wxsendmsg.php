@@ -160,6 +160,16 @@ class Wxsendmsg{
                     $info = json_decode($result, TRUE);
                     return $info;
                 }
+                    public function get_user_byopenid($openid){
+                    $mem_user = new Memcache(); //创建Memcache对象  
+                    $mem_user->connect('127.0.0.1', 11211); //连接Memcache服务器
+                    //$mem->delete(md5("access_token"));
+                    if(!($data=$mem_user->get(md5($openid)))){
+                             $data = $this->get_userinfo($openid);
+                             $mem_user->set(md5($openid), $data, 0, 7200);
+                    }
+                    return $data;
+    }
                      
 }
 

@@ -53,10 +53,10 @@
 <div class="row">
 <div class="span6">
 <ul class="nav nav-tabs">
-<li class="active"><a href="<?php echo site_url().'/admin/index';?>">申请列表</a> </li> 
-<li><a href="<?php echo site_url().'/admin/acceptlist';?>">已通过</a></li>
+<li class="active"><a href="<?php echo site_url().'/admin/index';?>">申请列表</a></li> 
+<li><a href="<?php echo site_url().'/admin/acceptlist';?>">已审核</a></li>
 <li><a href="<?php echo site_url().'/admin/userlist';?>">账户列表</a></li> 
-<li><a href="<?php echo site_url().'/admin/freeze';?>">已冻结</a></li> 
+<li><a href="<?php echo site_url().'/admin/freeze';?>">已冻结账户</a></li> 
 </ul>
 </div>
 </div>
@@ -77,22 +77,28 @@
 </thead>
 
 <tbody>
-    <?php foreach($apply as $v): ?>
+    <?php foreach($apply as $v){ ?>
  <tr>
   <td><?= $v['apply_id'];?></td>
-  <td><img src="<?= $v['headimgurl'].'132';?>"  height='80' width='80' /></td>
+  <?php if($v['yn'] != 3){ ?>
+  <td><img src="<?= $v['headimgurl'].'132';?>"  height='60' width='60' /></td>
   <td><?= $v['nickname'];?></td>
   <td><?= $v['area'];?></td>
+  <?php }else{ ?>
+  <td>已取消关注</td>
+  <td>已取消关注</td>
+  <td>已取消关注</td>
+  <?php } ?>
   <td style="color:red"><?= $v['money']/100;?></td>
   <td>
-      <button type="button" class="btn btn-success" >通过</button>
-<button type="button" class="btn btn-danger"> 拒绝</button>
+      <button type="button" class="btn btn-success" value= '1'>通过</button>
+      <button type="button" class="btn btn-danger" value = '2'>拒绝</button>
   </td>
  <input name = "openid" type="hidden" value = "<?= $v['openid'];?>" />
  <input name = "note_id" type="hidden" value = "<?= $v['note_id'];?>" />
  <input name = "money" type="hidden" value = "<?= $v['money'];?>" />
  </tr>
- <?php endforeach;?>
+ <?php }?>
 </tbody>
 </table>
 </center>
@@ -103,23 +109,39 @@
     $(function(){
         var path = $("#hid_site").val();
         $("button").click(function(){ 
+            $(this).text('正在发放...');
             var openid = $(this).parent().next().val();
             var note_id = $(this).parent().next().next().val();
             var money = $(this).parent().next().next().next().val();
-            console.log(openid);
-            console.log(note_id);
-            console.log(money);
-    var url = path+"/admin_action/accept_do";
-    $.post(url,{
-    openid : openid,
-    note_id : note_id,
-    money : money
-    },function(data){
-        var a = JSON.parse(data);
-        alert(a['message']);
-        location.reload();
-    });
-        //alert($(this).text()); 
+//            console.log(openid);
+//            console.log(note_id);
+//            console.log(money);
+            if($(this).val() == 1){
+                var url = path+"/admin_action/accept_do";
+                $.post(url,{
+                openid : openid,
+                note_id : note_id,
+                money : money
+                },function(data){
+                    var a = JSON.parse(data);
+                    alert(a['message']);
+                    if(a['code'] != 1){
+                        $(this).text('发放失败');
+                    }
+                    location.reload();
+                });
+            }
+            if($(this).val() == 2){
+                var url = path+"/admin_action/refuse_do";
+                $.post(url,{
+                openid : openid,
+                note_id : note_id
+                },function(data){
+                    var a = JSON.parse(data);
+                    alert(a['message']);
+                    location.reload();
+                });
+            }
         }); 
     });
 </script>

@@ -37,19 +37,19 @@ class User_model{
         if(isset($object->EventKey)){
                 $a = explode("_", $object->EventKey);
                 $scene_id = $a[1];
-                $sql2 = "UPDATE user_money SET popul_num= popul_num+1, money = money + 8 where scene_id=".$scene_id;
+                $sql2 = "UPDATE user_money SET popul_num= popul_num+1, money = money + 24 where scene_id=".$scene_id;
                 $result2 = mysql_query($sql2);        
         }
-        $money = 88;
+        $money = 24;
         $status = 1;
         $sql1 = "INSERT INTO user_money (openid, scene_id, money, status) VALUES ('".$object->FromUserName."', '".$new_scene_id."',".$money.",".$status.")";
         $result1 = mysql_query($sql1);
         if($result1 && $result2){
             if(isset($object->EventKey)){
-                 $query = "SELECT openid FROM user_money where scene_id= '".$scene_id."' limit 1";
+                 $query = "SELECT openid, money FROM user_money where scene_id= '".$scene_id."' limit 1";
                  $result = mysql_query($query);
-                 $openid = mysql_fetch_assoc($result);
-                return array('code'=>1, 'message'=>'设置成功','fopenid' => $openid['openid']);
+                 $f = mysql_fetch_assoc($result);
+                return array('code'=>1, 'message'=>'设置成功','fopenid' => $f['openid'], 'money' => $f['money']);
             }
             return array('code'=>1, 'message'=>'设置成功');
         }else{
@@ -86,7 +86,7 @@ class User_model{
                          if($query3['money'] >= 100){
                                 return array('code'=>1, 'message' =>'可以提现','money'=>$query3['money']);
                         }else{
-                                return array('code'=>-1,'message'=>'金额不足');
+                                return array('code'=>-1,'message'=>'金额不足,您的账户余额为: '.($query3['money']/100)."满一元才可提现");
                         }		
                 }else{
                         return array('code'=>-3, 'message' =>'提现已被拒绝');
@@ -186,7 +186,19 @@ class User_model{
      * 获取所有用户列表
      */
     public function get_usermoney(){
-        $sql = "SELECT * FROM user_money";
+        $sql = "SELECT * FROM user_money where status != 2 order by user_rank";
+        $result = mysql_query($sql);
+        $data = array();
+        while ($row = mysql_fetch_array($result,MYSQL_ASSOC)) {
+	$data[] = $row;
+        }
+        return $data;
+    }
+    /*
+     * 获取所有冻结用户get_userfreeze
+     */
+    public function get_userfreeze(){
+        $sql = "SELECT * FROM user_money where status = 2";
         $result = mysql_query($sql);
         $data = array();
         while ($row = mysql_fetch_array($result,MYSQL_ASSOC)) {
