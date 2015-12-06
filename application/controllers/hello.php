@@ -56,6 +56,7 @@ class Hello extends CI_Controller{
                                                                           $content2 = "您的好友  ".$user_info['nickname']."  通过你的二维码关注了我们的微信平台,奖励你0.24元,您目前的余额为: ".$result_user['money']."元";
                                                                           $this->wxsendmsg->responseTextBycustom($result_user['fopenid'], $content2);
                                                                       }
+                                                                      return;
 			}
                         if( strtolower($postObj->Event == 'unsubscribe') ){
                                     $this->load->library('user_model');
@@ -64,7 +65,59 @@ class Hello extends CI_Controller{
                                         return;
                                       }
                                     $this->user_model->update_user_status($postObj->FromUserName, 3);//设置用户状态为取消关注
+                                    return;
                         }
+                        if( strtolower($postObj->Event == 'SCAN') ){//已关注事件
+                                    $this->load->library('user_model');
+                                    $result_user = $this->set_user_money($postObj);
+                                     if($result_user['code'] == -1){
+                                        $content3 = $result_user['message'];
+                                      }else{
+                                          $content3 = "您已关注我们的公众平台,可点击生成专属二维码,好友通过您的二维码关注我们的平台后,您将获得0.24元的奖励, 满一元可以提现\n您目前的账户余额为:".($result_user['money']/100)."元";
+                                      }
+                                      $this->wxsendmsg->responseText($postObj, $content3);
+                                      return;
+                                    //$this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $content3);
+                        }
+                        if( strtolower($postObj->Event == 'CLICK') && $postObj->EventKey == 'V1001_EWM'){//二维码生成
+                                  $result_user = $this->set_user_money($postObj);
+                                   if($result_user['code'] == -1){
+                                   $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $result_user['message']);
+                                            return;
+                                    }
+                                   if($result_user['code'] == -4){//插入失败,键重复,提示稍后重试
+                                            $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $result_user['message']);
+                                            return;
+                                   }
+                                            $content = "二维码正在生成中........请稍后";
+                                            $result1 = $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $content);//客服接口发送文本消息
+                                            if($result1['errcode'] == 0){
+                                                          $result2 = $this->create_send_poster($postObj);//生成并发送二维码
+                                            }else {
+                                                          $error = "系统错误!请稍后再试!";
+                                                          $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $error);//客服接口发送文本消息
+                                           }
+                                           return;
+                        }
+                        if( strtolower($postObj->Event == 'CLICK') && $postObj->EventKey == 'V1001_HB'){//领取红包
+                                $this->load->library('user_model');
+                                $result = $this->applpay($postObj);//检查账户是否符合要求
+                                if($result['code'] == 1){
+                                            $money  = floor($result['money']/100) *100;//只取整数
+                                            $surplus =  $result['money'] - $money;//计算余额
+                                            $result_act = $this->user_model->app_money($postObj->FromUserName, $money);
+                                            if($result_act){
+                                                $user_money_info = "申请成功,由于系统问题,红包只能发放整数部分,我们将在24小时内,发放红包给你,请注意查收!  您账户的当前余额为:".($surplus/100)."元";
+                                                $this->wxsendmsg->responseText($postObj, $user_money_info);
+                                            }
+                                }
+                                return;
+                        }
+                        if( strtolower($postObj->Event == 'CLICK') && $postObj->EventKey == 'V1001_HBSM'){//红包说明
+                                  $hb_info = "公主岭生活网\n成立三周年感恩回馈,\n10万现金红包赠送，\n拉上小伙伴一起领红包！\n加入我们送０.2元，邀请一位好友关注再送０.2元好友越多，赚的越多。满一元就可提现．赶快点击专属名片，生成你的专属二维码吧！\n!!!注:本活动仅限微信地址为四平的小伙伴参加";
+                                  $this->wxsendmsg->responseText($postObj, $hb_info);
+                        }
+                        return;
 	}
         else if(strtolower($postObj->MsgType) == 'text' && trim($postObj->Content)=='领取红包'){
             $this->load->library('user_model');
@@ -88,14 +141,20 @@ class Hello extends CI_Controller{
                                                                           $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $result_user['message']);
                                                                           return;
                                                                       }
+                                                                      if($result_user['code'] == -4){//插入失败,键重复,提示稍后重试
+                                                                          $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $result_user['message']);
+                                                                          return;
+                                                                      }
                                                                       $content = "二维码正在生成中........请稍后";
                                                                       $result1 = $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $content);//客服接口发送文本消息
-                                                                      if($result1['errcode'] == 0){
-                                                                                $result2 = $this->create_send_poster($postObj);//生成并发送二维码
-                                                                      }else {
-                                                                                $error = "系统错误!请稍后再试!";
-                                                                                $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $error);//客服接口发送文本消息
-                                                                     }
+                                                                      //errmsg
+                                                                      $this->wxsendmsg->responseText($postObj, $result1['errmsg']);
+//                                                                      if($result1['errcode'] == 0){
+//                                                                                $result2 = $this->create_send_poster($postObj);//生成并发送二维码
+//                                                                      }else {
+//                                                                                $error = "系统错误!请稍后再试!";
+//                                                                                $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $error);//客服接口发送文本消息
+//                                                                     }
 				//$result = '服务号正在维护升级,给你带来的不便敬请谅解,后续将会有更多功能上线,让我们拭目以待!';
 		}else{
 			switch( trim($postObj->Content) ){
@@ -134,7 +193,7 @@ class Hello extends CI_Controller{
                     }else if($result['code'] ==  2){
                         $data = $this->user_model->update_user_status($object->FromUserName, 1);
                     }elseif($result['code'] ==  3){
-                        $data = array('code'=> 8, 'message'=>$result['message']);
+                        $data = array('code'=> 8, 'message'=>$result['message'], 'money'=>$result['money']);
                     }else{
                         $data = array('code'=> -1, 'message'=>'您的账号存在违规操作,已被冻结.如有问题请联系客服');
                     }

@@ -17,7 +17,7 @@ class Wxsendmsg{
                                    //$mem->delete(md5("access_token"));
 		if(!($data=$mem->get(md5("access_token")))){
                                                     $data = $this->getWxAccessTokenBycurl();
-                                                    $mem->set(md5("access_token"), $data, 0, $data['expires_in']);
+                                                    $mem->set(md5("access_token"), $data, 0, 3600);
 		}
 		return $data['access_token'];
     }
@@ -147,6 +147,7 @@ class Wxsendmsg{
                 public function responseTextBycustom($openid, $content){
                 $txt = '{ "touser" :"'. $openid.'","msgtype" : "text" ,'.'"text": {"content": "'.$content.'"} }';
                 $access_token = $this->getWxAccessToken(); 
+                //return array('code'=>$info['errcode'], 'errmsg'=>$access_token);
                 $url = "https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=".$access_token;
                 $result = $this->https_curl($url, $txt);
                 $info = json_decode($result, TRUE);
@@ -169,7 +170,15 @@ class Wxsendmsg{
                              $mem_user->set(md5($openid), $data, 0, 7200);
                     }
                     return $data;
-    }
-                     
+                }
+                    //创建菜单
+                    public function create_menu($data)
+                    {
+                        $access_token = $this->getWxAccessToken(); 
+                        $url = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=".$access_token;
+                         $res = $this->https_curl($url, $data);
+                        $result = json_decode($res, true);
+                         return $result['errcode'];
+                    }      
 }
 

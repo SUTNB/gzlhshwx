@@ -5,28 +5,30 @@ class User_model{
     * 检查用户是否关注过公众号
    */
  public function check($openid){
-                   $query = "SELECT status FROM user_money where openid='".$openid."'";
+                   $query = "SELECT status, money FROM user_money where openid='".$openid."' limit 1";
                    $result = mysql_query($query);
                    $a = mysql_fetch_assoc($result);
                    if(!isset($a['status'])){    
                        return array('code' => 1, 'message' => '新用户');
                    } else {
-                       if($a['status'] == 2)
+                       if($a['status'] == 2){
                            return array('code' => -1, 'message' => '账号已冻结');
-                       elseif($a['status'] == 3)
+                       }
+                       elseif($a['status'] == 3){
                            return array('code' => 2, 'message' => '取消关注');
+                       }
                        else {
-                           return array('code' => 3, 'message' => '正常');
+                           return array('code' => 3, 'message' => '正常', 'money' => $a['money']);
                        }
                    }
          }
      //获取毫秒时间戳
    function get_time(){
-       $s = "1449121600000";
-        $time = explode ( " ", microtime () );  
-        $time = $time [1] . ($time [0] * 1000);  
-        $time2 = explode ( ".", $time );  
-        return  $time2 [0] - $s;
+//       $s = "1449121600000";
+//        $time = explode ( " ", microtime () );  
+//        $time = $time [1] . ($time [0] * 1000);  
+//        $time2 = explode ( ".", $time );  
+        return  time();
    }
     /*
      * 初始化用户账户
@@ -44,12 +46,15 @@ class User_model{
         $status = 1;
         $sql1 = "INSERT INTO user_money (openid, scene_id, money, status) VALUES ('".$object->FromUserName."', '".$new_scene_id."',".$money.",".$status.")";
         $result1 = mysql_query($sql1);
-        if($result1 && $result2){
+        if($result2){
             if(isset($object->EventKey)){
                  $query = "SELECT openid, money FROM user_money where scene_id= '".$scene_id."' limit 1";
                  $result = mysql_query($query);
                  $f = mysql_fetch_assoc($result);
                 return array('code'=>1, 'message'=>'设置成功','fopenid' => $f['openid'], 'money' => $f['money']);
+            }
+            if(!$result1){
+                return array('code'=>-4, 'message'=>'服务器忙碌,请稍后再试!');//用户过多,生成插入有失败,提示稍后重试
             }
             return array('code'=>1, 'message'=>'设置成功');
         }else{
