@@ -17,7 +17,7 @@ class Admin_action extends Admin_Controller{
             $result_pay= $this->wxhb->pay($openid,$money);
             if($result_pay == 'SUCCESS'){
                  $this->user_model->set_app_status($note_id, 2);//2为发放中
-                 $content = "感谢您参与本次活动,您还可继续邀请好友哦!";
+                 $content = "亲，你太厉害了，这么快就领到红包了，一看你就有贵人相，继续努力，红包不断，加油!";
                  $this->wxsendmsg->responseTextBycustom($openid, $content);
                  echo json_encode(array('code'=> 1, 'message' => '发放成功'));
             }else{
@@ -33,7 +33,7 @@ class Admin_action extends Admin_Controller{
         //echo $note_id.'---------'.$openid.'----------'.$money;die;
         $result = $this->user_model->set_app_status($note_id, 3);//3为拒绝提现
         if($result ){
-                 $content = "您的提现要求已被拒绝,如有问题请联系客服!";
+                 $content = "您的提现请求已被拒绝,系统检测到你非公主岭本地用户，本活动只针对公主岭本地用户，或者有违规操作行为，若要申诉请，联系客服.\n微信hsh0434";
                  $this->wxsendmsg->responseTextBycustom($openid, $content);
                  echo json_encode(array('code'=> 1, 'message' => '操作成功'));
             }else{

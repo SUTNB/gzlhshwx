@@ -6,7 +6,8 @@ class Hello extends CI_Controller{
         //$this->load->model('user_model');
         //$this->wxsendmsg->getWxAccessToken();die;
     }
-    public function index(){          
+    public function index(){ 
+                                   $echostr = "";
 		$nonce     = $_GET['nonce'];
 		$token      = TOKEN;
 		$timestamp = $_GET['timestamp'];
@@ -18,7 +19,7 @@ class Hello extends CI_Controller{
 		sort($array);
 		//拼接成字符串,sha1加密 ，然后与signature进行校验
 		$str = sha1( implode( $array ) );
-		if( $str  == $signature && $echostr ){
+		if( $str  == $signature && !empty($echostr) ){
 			//第一次接入weixin api接口的时候
 			echo  $echostr;
 			exit;
@@ -43,19 +44,33 @@ class Hello extends CI_Controller{
 			//如果是关注 subscribe 事件
 			if( strtolower($postObj->Event == 'subscribe') ){
 				//回复用户消息(纯文本格式)	
+                                                                      $user = $this->wxsendmsg->get_userinfo($postObj->FromUserName);//获取用户信息
+                                                                      if(!isset($user['city']) || $user['city'] != '四平'){//不是四平的不算粉丝
+                                                                            $content = "公主岭生活网\n成立三周年感恩回馈,\n10万现金红包赠送，\n拉上小伙伴一起领红包！\n加入我们送０.19元，邀请一位好友关注再送０.1元好友越多，赚的越多。满一元就可提现．赶快点击专属名片，生成你的专属二维码吧！\n!!!注:本活动仅限公主岭地区的小伙伴参加\n测试期间，若有调整敬请谅解！";                                                                                                  
+                                                                            $this->wxsendmsg->responseText($postObj, $content);
+                                                                           return;
+                                                                      }
                                                                       $result_user = $this->set_user_money($postObj);
                                                                       if($result_user['code'] == -1){
                                                                           $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $result_user['message']);
                                                                           return;
                                                                       }
-                                                                      $content1 = "欢迎关注我们的微信公众平台";
-                                                                      $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $content1);
-                                                                      if(isset($result_user['fopenid'])){
-                                                                          $user_info = $this->wxsendmsg->get_userinfo($postObj->FromUserName);
+                                                                      if(isset($result_user['fopenid'])){//提示关注双方
+                                                                          $user_info_s = $this->wxsendmsg->get_user_byopenid($postObj->FromUserName);
                                                                           $result_user['money'] = $result_user['money']/100;
-                                                                          $content2 = "您的好友  ".$user_info['nickname']."  通过你的二维码关注了我们的微信平台,奖励你0.24元,您目前的余额为: ".$result_user['money']."元";
+                                                                          $content2 = "您的好友  【".$user_info_s['nickname']."】  通过你的二维码关注了我们的微信平台\n【您的余额: ".$result_user['money']."元】";
                                                                           $this->wxsendmsg->responseTextBycustom($result_user['fopenid'], $content2);
-                                                                      }
+                                                                          $user_info_f = $this->wxsendmsg->get_user_byopenid($result_user['fopenid']);
+                                                                          $content1 = "【".$user_info_s['nickname']."】您好，您的好友　【".$user_info_f['nickname']."】 邀你一起抢红包,【".$user_info_f['nickname']."】,您获得了0.19元，已打入您的账户！点击专属名片，和小伙伴们一起领红包吧！\n\n\n公主岭生活网\n成立三周年感恩回馈,\n10万现金红包赠送，\n拉上小伙伴一起领红包！\n加入我们送０.19元，邀请一位好友关注再送０.1元好友越多，赚的越多。满一元就可提现．赶快点击专属名片，生成你的专属二维码吧！\n!!!注:本活动仅限公主岭地区的小伙伴参加\n测试期间，若有调整敬请谅解！";
+                                                                      }else{
+                                                                          if(isset($result_user['warn'])){
+                                                                             $result = $this->user_model->get_money($result_user['warn']);
+                                                                              $content1 = "欢迎回来，【您的余额为：".($result['money']/100)."元】，快去邀请你的好友，来一起抢红包吧！\n测试期间，若有调整敬请谅解！";
+                                                                          }else{
+                                                                                $content1 = "公主岭生活网\n成立三周年感恩回馈,\n10万现金红包赠送，\n拉上小伙伴一起领红包！\n加入我们送０.19元，邀请一位好友关注再送０.1元好友越多，赚的越多。满一元就可提现．赶快点击专属名片，生成你的专属二维码吧！\n!!!注:本活动仅限公主岭地区的小伙伴参加\n测试期间，若有调整敬请谅解！";                                                                                                  
+                                                                          }
+                                                                     }
+                                                                      $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $content1);
                                                                       return;
 			}
                         if( strtolower($postObj->Event == 'unsubscribe') ){
@@ -73,7 +88,7 @@ class Hello extends CI_Controller{
                                      if($result_user['code'] == -1){
                                         $content3 = $result_user['message'];
                                       }else{
-                                          $content3 = "您已关注我们的公众平台,可点击生成专属二维码,好友通过您的二维码关注我们的平台后,您将获得0.24元的奖励, 满一元可以提现\n您目前的账户余额为:".($result_user['money']/100)."元";
+                                          $content3 = "您已关注我们的公众平台,可点击生成专属二维码,好友通过您的二维码关注我们的平台后,您将获得0.1元的奖励, 满一元可以提现\n【您的余额为:".($result_user['money']/100)."元】";
                                       }
                                       $this->wxsendmsg->responseText($postObj, $content3);
                                       return;
@@ -89,7 +104,7 @@ class Hello extends CI_Controller{
                                             $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $result_user['message']);
                                             return;
                                    }
-                                            $content = "二维码正在生成中........请稍后";
+                                            $content = "二维码正在生成中........\n领取口诀:默念1.2.3\n\n请邀请公主岭地区的小伙伴，其他地区的不算哦！么么哒！";
                                             $result1 = $this->wxsendmsg->responseTextBycustom($postObj->FromUserName, $content);//客服接口发送文本消息
                                             if($result1['errcode'] == 0){
                                                           $result2 = $this->create_send_poster($postObj);//生成并发送二维码
@@ -99,22 +114,24 @@ class Hello extends CI_Controller{
                                            }
                                            return;
                         }
-                        if( strtolower($postObj->Event == 'CLICK') && $postObj->EventKey == 'V1001_HB'){//领取红包
+                        if( strtolower($postObj->Event == 'CLICK') && $postObj->EventKey == 'V1001_HB'){//提现
                                 $this->load->library('user_model');
                                 $result = $this->applpay($postObj);//检查账户是否符合要求
+                                //$result = "系统忙，请稍后再试";
+                                //$this->wxsendmsg->responseText($postObj, $result);
                                 if($result['code'] == 1){
                                             $money  = floor($result['money']/100) *100;//只取整数
                                             $surplus =  $result['money'] - $money;//计算余额
                                             $result_act = $this->user_model->app_money($postObj->FromUserName, $money);
                                             if($result_act){
-                                                $user_money_info = "申请成功,由于系统问题,红包只能发放整数部分,我们将在24小时内,发放红包给你,请注意查收!  您账户的当前余额为:".($surplus/100)."元";
+                                                $user_money_info = "由于提现用户巨大\n请耐心等待...\n我们将在1-3个工作日给你支付\n您的余额为:【".($surplus/100)."元】\n注:本活动只针对微信地址为四平的用户";
                                                 $this->wxsendmsg->responseText($postObj, $user_money_info);
                                             }
                                 }
                                 return;
                         }
                         if( strtolower($postObj->Event == 'CLICK') && $postObj->EventKey == 'V1001_HBSM'){//红包说明
-                                  $hb_info = "公主岭生活网\n成立三周年感恩回馈,\n10万现金红包赠送，\n拉上小伙伴一起领红包！\n加入我们送０.2元，邀请一位好友关注再送０.2元好友越多，赚的越多。满一元就可提现．赶快点击专属名片，生成你的专属二维码吧！\n!!!注:本活动仅限微信地址为四平的小伙伴参加";
+                                  $hb_info = "公主岭生活网\n成立三周年感恩回馈,\n10万现金红包赠送，\n拉上小伙伴一起领红包！\n加入我们送０.19元，邀请一位好友关注再送０.1元好友越多，赚的越多。满一元就可提现．赶快点击专属名片，生成你的专属二维码吧！\n本活动仅限公主岭地区小伙伴参加！」—————————";
                                   $this->wxsendmsg->responseText($postObj, $hb_info);
                         }
                         return;
@@ -127,7 +144,7 @@ class Hello extends CI_Controller{
                 $surplus =  $result['money'] - $money;//计算余额
                 $result_act = $this->user_model->app_money($postObj->FromUserName, $money);
                 if($result_act){
-                    $user_money_info = "申请成功,由于系统问题,红包只能发放整数部分,我们将在24小时内,发放红包给你,请注意查收!  您账户的当前余额为:".($surplus/100)."元";
+                    $user_money_info = "由于提现用户巨大\n请耐心等待...\n我们将在1-3个工作日给你支付\n您的余额为:【".($surplus/100)."元】\n注:本活动只针对微信地址为公主岭的用户";
                     $this->wxsendmsg->responseText($postObj, $user_money_info);
                 }
             }
@@ -157,24 +174,7 @@ class Hello extends CI_Controller{
 //                                                                     }
 				//$result = '服务号正在维护升级,给你带来的不便敬请谅解,后续将会有更多功能上线,让我们拭目以待!';
 		}else{
-			switch( trim($postObj->Content) ){
-				case 1:
-					$content = '您输入的数字是1';
-				break;
-				case 2:
-					$content = '您输入的数字是2';
-				break;
-				case 3:
-					$content = '您输入的数字是3';
-				break;
-				case 4:
-					$content = "<a href='http://www.imooc.com'>慕课</a>";
-				break;
-				case '英文':
-					$content = 'imooc is ok';
-				break;
-				default :$content = '服务号正在维护升级,给你带来的不便敬请谅解,后续将会有更多功能上线,让我们拭目以待!';
-			}	
+			$content = "还没参加活动的赶快参加哦！\n点击专属名片，推广领红包\n本活动真实有效\n平台承接商业推广\n微信公众平台运营托管\n微网站，企业网站建设\n微信公众平台二次开发\n联系客服微信:hsh0434\n注:本活动只针对微信地址为公主岭的用户";
                                         $this->wxsendmsg->responseText($postObj, $content);	
 		}//if end
 	}//reponseMsg end
@@ -203,7 +203,8 @@ class Hello extends CI_Controller{
 	public function applpay($postObj){
                              $this->load->library('user_model');
                              $result = $this->user_model->check($postObj->FromUserName);//检查用户类型
-                             if($result['code'] == 1){
+                             //return $result['message'];
+                             if($result['code'] == 1 || $result['code'] == 2){
                                  $content = "您尚未参与我们的活动!";
                                  $this->wxsendmsg->responseText($postObj, $content);
                                  return false;

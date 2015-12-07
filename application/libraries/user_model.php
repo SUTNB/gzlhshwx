@@ -39,10 +39,10 @@ class User_model{
         if(isset($object->EventKey)){
                 $a = explode("_", $object->EventKey);
                 $scene_id = $a[1];
-                $sql2 = "UPDATE user_money SET popul_num= popul_num+1, money = money + 24 where scene_id=".$scene_id;
+                $sql2 = "UPDATE user_money SET popul_num= popul_num+1, money = money + 10 where scene_id=".$scene_id;
                 $result2 = mysql_query($sql2);        
         }
-        $money = 24;
+        $money = 19;//初始化账户
         $status = 1;
         $sql1 = "INSERT INTO user_money (openid, scene_id, money, status) VALUES ('".$object->FromUserName."', '".$new_scene_id."',".$money.",".$status.")";
         $result1 = mysql_query($sql1);
@@ -68,7 +68,7 @@ class User_model{
         $sql = "UPDATE user_money SET status= '".$status."' where openid='".$openid."'";
         $result = mysql_query($sql);
         if($result){
-            return array('code'=>1, 'message'=>'修改成功');
+            return array('code'=>1, 'message'=>'修改成功', 'warn'=>$openid);//warn在取下关注后再关注时使用
         }else{
             return array('code'=>-2, 'message'=>'修改失败');
         }
@@ -91,14 +91,23 @@ class User_model{
                          if($query3['money'] >= 100){
                                 return array('code'=>1, 'message' =>'可以提现','money'=>$query3['money']);
                         }else{
-                                return array('code'=>-1,'message'=>'金额不足,您的账户余额为: '.($query3['money']/100)."满一元才可提现");
+                                return array('code'=>-1,'message'=>"【您的账户金额为:".($query3['money']/100)."】\n余额不足哦！满一元就可提现，继续努力，快告诉小伙伴，一起来参加!\n小编偷偷告诉你，把二维码群发给好友，告诉他们扫描领红包，很快就可以提现哦！别告诉别人哦！");
                         }		
                 }else{
-                        return array('code'=>-3, 'message' =>'提现已被拒绝');
+                        return array('code'=>-3, 'message' =>"您的提现请求已被拒绝,系统检测到你非公主岭本地用户，本活动只针对公主岭本地用户，或者有违规操作行为，若要申诉请，联系客服.\n微信hsh0434");
                 }
         }else{
                 return array('code'=>-2,'message'=>'已提交提现申请,请耐心等待');
             }
+    }
+     /*
+     * 获得金额
+     */
+    public function get_money($openid){
+                        $sql = "SELECT money FROM user_money where  openid='".$openid."' limit 1";
+                        $result = mysql_query($sql);
+                        $query = mysql_fetch_assoc($result);
+                        return array('code'=>1, 'money'=>$query['money']);
     }
     /*
      * 提现申请
