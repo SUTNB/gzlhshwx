@@ -131,7 +131,7 @@ class Hello extends CI_Controller{
                                 return;
                         }
                         if( strtolower($postObj->Event == 'CLICK') && $postObj->EventKey == 'V1001_HBSM'){//红包说明
-                                  $hb_info = "公主岭生活网\n成立三周年感恩回馈,\n10万现金红包赠送，\n拉上小伙伴一起领红包！\n加入我们送０.19元，邀请一位好友关注再送０.1元好友越多，赚的越多。满一元就可提现．赶快点击专属名片，生成你的专属二维码吧！\n本活动仅限公主岭地区小伙伴参加！」—————————";
+                                  $hb_info = "公主岭生活网\n成立三周年感恩回馈,\n10万现金红包赠送，\n拉上小伙伴一起领红包！\n加入我们送０.19元，邀请一位好友关注再送０.1元好友越多，赚的越多。满一元就可提现．赶快点击专属名片，生成你的专属二维码吧！\n本活动仅限公主岭地区小伙伴参加！」\n—————————";
                                   $this->wxsendmsg->responseText($postObj, $hb_info);
                         }
                         return;
