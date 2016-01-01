@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>提现申请</title>
+    <link href="<?= base_url('application/views/css/bootstrap.min.css');?>" rel="stylesheet">
+    <script src="<?= base_url('application/views/js/jquery-1.9.1.min.js');?>"></script>
+    <script src="<?= base_url('application/views/js/bootstrap.min.js');?>"></script>
+    <script src="<?= base_url('application/views/js/html5shiv.js');?>"></script>
+    <!-- <script src="http://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script> -->
+    <style type="text/css">
+.user_info{
+  position: relative;
+  margin:2% 8%;
+  padding:40px;
+  background-color:#f5f5f5;
+  min-height:20px;
+}
+.class_hr{
+  width:75%;
+  height:2px;
+  border:none;
+  border-top:2px dotted #185598;
+}
+  .label_reg{
+    width:20%;
+  }
+  .table{
+    width:100%;
+  }
+  td,th{
+    text-align:center
+  }
+  .container_modal{
+    margin-left:20%;
+}
+  .old_color{
+      background-color: #a8fb98;
+  }
+  .new_color{
+      background-color: #7480df;
+  }
+  .container{
+      margin-top:2%;
+  }
+  </style>
+  </head>
+  
+  <body>
+<div class="container">
+<div class="row">
+<div class="span6">
+<ul class="nav nav-tabs">
+<li><a href="<?php echo site_url().'/admin/index';?>">申请列表</a> </li> 
+<li><a href="<?php echo site_url().'/admin/acceptlist';?>">已审核</a></li>
+<li><a href="<?php echo site_url().'/admin/userlist';?>">账户列表</a></li> 
+<li class="active"><a href="<?php echo site_url().'/admin/freeze';?>">已冻结账户</a></li> 
+</ul>
+</div>
+</div>
+</div>
+<div class="user_info">
+<center>
+    <h2>已冻结账户列表</h2>
+<table class="table table-bordered table-hover">
+  <thead>
+  <tr class="th_class">
+  <th style="width:10%">用户ID</th>
+  <th style="width:10%">头像</th>
+  <th style="width:20%">昵称</th>
+  <th style="width:20%">地区</th>
+  <th style="width:10%">账户余额</th>
+  <th style="width:10%">下线人数</th>
+  <th style="width:20%">操作</th>
+ </tr>
+</thead>
+
+<tbody>
+     <?php foreach($user_freeze as $v): ?>
+ <tr>
+  <td><?= $v['user_rank'];?></td>
+  <?php if($v['yn'] != 3){ ?>
+  <td><img src="<?= $v['headimgurl'].'132';?>"  height='60' width='60' /></td>
+  <td><?= $v['nickname'];?></td>
+  <td><?= $v['area'];?></td>
+  <?php }else{ ?>
+  <td>已取消关注</td>
+  <td>已取消关注</td>
+  <td>已取消关注</td>
+  <?php } ?>
+  <td style="color:red"><?= $v['money']/100;?></td>
+  <td style="color:red"><?= $v['popul_num'];?></td>
+  <td>
+      <button type="button" class="btn btn-danger"> 解冻账号</button>
+  </td>
+   <input name = "openid" type="hidden" value = "<?= $v['openid'];?>" />
+ </tr>
+ <?php endforeach;?>
+ </tbody>
+</table>
+</center>
+</div>
+<input id = "hid_site" type="hidden" value = "<?= site_url();?>" />
+<input id = "hid_base" type="hidden" value = "<?= base_url();?>" />
+<script type="text/javascript">
+    $(function(){
+        var path = $("#hid_site").val();
+        $("button").click(function(){ 
+            var openid = $(this).parent().next().val();
+            console.log(openid);
+    var url = path+"/admin_action/unfreeze_do";
+    $.post(url,{
+    openid : openid
+    },function(data){
+        var a = JSON.parse(data);
+        alert(a['message']);
+        location.reload();
+    });
+        //alert($(this).text()); 
+        }); 
+    });
+</script>
+</body>
+</html>
