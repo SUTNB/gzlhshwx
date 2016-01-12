@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>提现申请审核</title>
+    <title>申请审核结果</title>
     <link href="<?= base_url('application/views/css/bootstrap.min.css');?>" rel="stylesheet">
     <script src="<?= base_url('application/views/js/jquery-1.9.1.min.js');?>"></script>
     <script src="<?= base_url('application/views/js/bootstrap.min.js');?>"></script>
@@ -30,8 +30,8 @@
   .table{
     width:100%;
   }
-  td,th{
-    text-align:center
+  .table td,.table th{
+    text-align:center;
   }
   .container_modal{
     margin-left:20%;
@@ -54,9 +54,26 @@
 <div class="span6">
 <ul class="nav nav-tabs">
 <li><a href="<?php echo site_url().'/admin/index';?>">申请列表</a> </li> 
-<li class="active"><a href="<?php echo site_url().'/admin/acceptlist';?>">已审核</a></li>
-<li><a href="<?php echo site_url().'/admin/userlist';?>">账户列表</a></li> 
-<li><a href="<?php echo site_url().'/admin/freeze';?>">已冻结账户</a></li> 
+<li role="presentation" class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+      已审核 <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+        <li><a href="<?php echo site_url().'/admin/acceptlist/3';?>">拒绝</a></li>
+        <li><a href="<?php echo site_url().'/admin/acceptlist/2';?>">通过</a></li>
+    </ul>
+  </li>
+  <li role="presentation" class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+      账户管理 <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+        <li><a href="<?php echo site_url().'/admin/userlist/';?>">账户列表</a></li> 
+        <li><a href="<?php echo site_url().'/admin/freeze/';?>">已冻结账户</a></li>
+    </ul>
+  </li>
+  <li><a href="<?php echo site_url().'/admin/system_set';?>">系统设置</a> </li>
+  <li><a href="<?php echo site_url().'/admin/menu_set';?>">菜单设置</a> </li> 
 </ul>
 </div>
 </div>
@@ -97,6 +114,9 @@
  <?php }?>
 </tbody>
 </table>
+<nav>
+<?php echo $links;?>
+</nav>
 </center>
 </div>
 

@@ -1,0 +1,43 @@
+<html>
+<head>
+<link href="../css/bootstrap.min.css" rel="stylesheet">
+<script type="text/javascript" src="jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="bootstrap.min.js"></script>
+<script type="text/javascript" src="html5shiv.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+  $(".btn1").click(function(){
+  $("#test").slideUp(500);
+  });
+  $(".btn2").click(function(){
+  $("#test").slideDown(500);
+  });
+});
+</script>
+</head>
+<body>
+<p>This is a paragraph.</p>
+<div class="table table-bordered table-hover">
+<div>
+<div id="test">
+<div>100</div>
+<div>200</div>
+</div>
+</div>
+<div>
+<div>
+<div>300</div>
+<div>400</div>
+</div>
+<div>
+<div>500</div>
+<div>600</div>
+</div>
+</div>
+</div>
+</div>
+<button class="btn1">Hide</button>
+<button class="btn2">Show</button>
+</body>
+</html>
+

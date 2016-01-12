@@ -232,7 +232,7 @@ class Hello extends CI_Controller{
                     $this->load->library('user_model');
                     $data = $this->user_model->get_userinfo($postObj->FromUserName);//$postObj->FromUserName
                     if($data['time'] === \NULL ||time() - strtotime($data['time']) > 7*24*60*60){  
-                        $save_result = $this->user_model->set_userinfo($postObj->FromUserName, '123465','13246');
+                        //$save_result = $this->user_model->set_userinfo($postObj->FromUserName, '123465','13246');
                         $result_create = $this->wxsendmsg->create_qrcode($data['scene_id'], $postObj->FromUserName);
                         if($result_create['code'] == 1){
                             $result_upload = $this->wxsendmsg->upload_qrcode($result_create['url']); 

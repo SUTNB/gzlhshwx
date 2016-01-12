@@ -175,20 +175,30 @@ class User_model{
     /*
      * 获取申请信息
      */
-    public function get_appmoney(){
-        $sql = "SELECT apply_id, openid,note_id, money, sub_time FROM apply_getmoney where status = 1";
+    //暂未使用
+//    public function get_appmoney(){
+//        $sql = "SELECT apply_id, openid,note_id, money, sub_time FROM apply_getmoney where status = 1";
+//        $result = mysql_query($sql);
+//        $data = array();
+//        while ($row = mysql_fetch_array($result,MYSQL_ASSOC)) {
+//	$data[] = $row;
+//        }
+//        return $data;
+//    }
+     /*
+     * 获取某个审核状态总数
+     */
+    public function get_app_total_rows($status){
+        $sql = "SELECT  count(*) FROM apply_getmoney where status =".$status;
         $result = mysql_query($sql);
-        $data = array();
-        while ($row = mysql_fetch_array($result,MYSQL_ASSOC)) {
-	$data[] = $row;
-        }
-        return $data;
+        $data = mysql_fetch_assoc($result);
+        return $data['count(*)'];
     }
     /*
      * 获取已审核过的列表
      */
-    public function get_appedmoney(){
-        $sql = "SELECT apply_id, openid,note_id, money, sub_time, status FROM apply_getmoney where status != 1";
+    public function get_appedmoney($status, $per, $offset){
+        $sql = "SELECT apply_id, openid,note_id, money, sub_time, status FROM apply_getmoney where status = ".$status.' limit '.$offset.','.$per;
         $result = mysql_query($sql);
         $data = array();
         while ($row = mysql_fetch_array($result,MYSQL_ASSOC)) {
@@ -197,13 +207,22 @@ class User_model{
         return $data;
     }
     /*
+     * 获取所有用户总数
+     */
+    public function get_user_total_rows(){
+        $sql = "SELECT  count(*) FROM user_money where status = 1";
+        $result = mysql_query($sql);
+        $data = mysql_fetch_assoc($result);
+        return $data['count(*)'];
+    }
+    /*
      * 获取所有用户列表
      */
-    public function get_usermoney(){
-        $sql = "SELECT * FROM user_money where status != 2 order by user_rank";
+    public function get_usermoney($per, $offset){
+        $sql = "SELECT * FROM user_money where status = 1 order by user_rank limit ".$offset.','.$per;
         $result = mysql_query($sql);
-        $data = array();
-        while ($row = mysql_fetch_array($result,MYSQL_ASSOC)) {
+        $data = [];
+        while ($row = mysql_fetch_array($result)) {
 	$data[] = $row;
         }
         return $data;
@@ -211,8 +230,17 @@ class User_model{
     /*
      * 获取所有冻结用户get_userfreeze
      */
-    public function get_userfreeze(){
-        $sql = "SELECT * FROM user_money where status = 2";
+    public function get_userfreeze_total_rows(){
+        $sql = "SELECT count(*) FROM user_money where status = 2";
+        $result = mysql_query($sql);
+        $data = mysql_fetch_assoc($result);
+        return $data['count(*)'];
+    }
+    /*
+     * 获取所有冻结用户get_userfreeze
+     */
+    public function get_userfreeze($per, $offset){
+        $sql = "SELECT * FROM user_money where status = 2 limit ".$offset.','.$per;
         $result = mysql_query($sql);
         $data = array();
         while ($row = mysql_fetch_array($result,MYSQL_ASSOC)) {

@@ -30,8 +30,8 @@
   .table{
     width:100%;
   }
-  td,th{
-    text-align:center
+  .table td,.table th{
+    text-align:center;
   }
   .container_modal{
     margin-left:20%;
@@ -53,9 +53,26 @@
 <div class="span6">
 <ul class="nav nav-tabs">
 <li class="active"><a href="<?php echo site_url().'/admin/index';?>">申请列表</a></li> 
-<li><a href="<?php echo site_url().'/admin/acceptlist';?>">已审核</a></li>
-<li><a href="<?php echo site_url().'/admin/userlist';?>">账户列表</a></li> 
-<li><a href="<?php echo site_url().'/admin/freeze';?>">已冻结账户</a></li> 
+<li role="presentation" class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+      已审核 <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+        <li><a href="<?php echo site_url().'/admin/acceptlist/3';?>">拒绝</a></li>
+        <li><a href="<?php echo site_url().'/admin/acceptlist/2';?>">通过</a></li>
+    </ul>
+  </li>
+  <li role="presentation" class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+      账户管理 <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+        <li><a href="<?php echo site_url().'/admin/userlist';?>">账户列表</a></li> 
+        <li><a href="<?php echo site_url().'/admin/freeze';?>">已冻结账户</a></li>
+    </ul>
+  </li>
+    <li><a href="<?php echo site_url().'/admin/system_set';?>">系统设置</a> </li>
+  <li><a href="<?php echo site_url().'/admin/menu_set';?>">菜单设置</a> </li> 
 </ul>
 </div>
 </div>
@@ -100,6 +117,9 @@
  <?php }?>
 </tbody>
 </table>
+<nav>
+<?php echo $links;?>
+</nav>
 </center>
 </div>
 <input id = "hid_site" type="hidden" value = "<?= site_url();?>" />
@@ -108,10 +128,11 @@
     $(function(){
         var path = $("#hid_site").val();
         $("button").click(function(){ 
-            $(this).text('正在发放...');
-            var openid = $(this).parent().next().val();
-            var note_id = $(this).parent().next().next().val();
-            var money = $(this).parent().next().next().next().val();
+            $(this).text('正在操作...');
+            var par = $(this).parent();
+            var openid = par.next().val();
+            var note_id = par.next().next().val();
+            var money = par.next().next().next().val();
 //            console.log(openid);
 //            console.log(note_id);
 //            console.log(money);
@@ -127,7 +148,8 @@
                     if(a['code'] != 1){
                         $(this).text('发放失败');
                     }
-                    location.reload();
+                    par.parent().hide(500);
+                    //location.reload();
                 });
             }
             if($(this).val() == 2){
@@ -138,7 +160,8 @@
                 },function(data){
                     var a = JSON.parse(data);
                     alert(a['message']);
-                    location.reload();
+                    //location.reload();
+                    par.parent().hide(500);
                 });
             }
         }); 
