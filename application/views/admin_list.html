@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>管理员列表</title>
+    <link href="<?= base_url('application/views/css/bootstrap.min.css');?>" rel="stylesheet">
+    <script src="<?= base_url('application/views/js/jquery-1.9.1.min.js');?>"></script>
+    <script src="<?= base_url('application/views/js/bootstrap.min.js');?>"></script>
+    <script src="<?= base_url('application/views/js/html5shiv.js');?>"></script>
+    <!-- <script src="http://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script> -->
+    <style type="text/css">
+.user_info{
+  position: relative;
+  margin:2% 8%;
+  padding:40px;
+  background-color:#f5f5f5;
+  min-height:20px;
+}
+.class_hr{
+  width:75%;
+  height:2px;
+  border:none;
+  border-top:2px dotted #185598;
+}
+  .label_reg{
+    width:20%;
+  }
+  .table{
+    width:100%;
+  }
+  .table td,.table th{
+    text-align:center;
+  }
+  .container_modal{
+    margin-left:20%;
+}
+  .old_color{
+      background-color: #a8fb98;
+  }
+  .new_color{
+      background-color: #7480df;
+  }
+  .container{
+      margin-top:2%;
+  }
+  </style>
+  </head>
+  
+  <body>
+<div class="container">
+<div class="row">
+<div class="span6">
+<ul class="nav nav-tabs">
+<li><a href="<?php echo site_url().'/admin/index';?>">申请列表</a> </li> 
+<li role="presentation" class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+      已审核 <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+        <li><a href="<?php echo site_url().'/admin/acceptlist/3';?>">拒绝</a></li>
+        <li><a href="<?php echo site_url().'/admin/acceptlist/2';?>">通过</a></li>
+    </ul>
+  </li>
+  <li role="presentation" class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+      账户管理 <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+        <li><a href="<?php echo site_url().'/admin/userlist/';?>">账户列表</a></li> 
+        <li><a href="<?php echo site_url().'/admin/freeze/';?>">已冻结账户</a></li>
+    </ul>
+  </li>
+  <li><a href="<?php echo site_url().'/admin/system_set';?>">系统设置</a> </li>
+  <li><a href="<?php echo site_url().'/admin/menu_set';?>">菜单设置</a> </li> 
+</ul>
+</div>
+</div>
+</div>
+<div class="user_info">
+<center>
+    <h2>已审核列表</h2>
+<table class="table table-bordered table-hover">
+  <thead>
+  <tr class="th_class">
+  <th style="width:10%">申请ID	</th>
+  <th style="width:10%">头像</th>
+  <th style="width:10%">昵称</th>
+  <th style="width:20%">地区</th>
+  <th style="width:8%">提现金额</th>
+  <th style="width:30%">提现状态</th>
+ </tr>
+</thead>
+
+<tbody>
+     <?php foreach($applyed as $v){ ?>
+ <tr>
+  <td><?= $v['apply_id'];?></td>
+  <?php if($v['yn'] != 3){ ?>
+  <td><img src="<?= $v['headimgurl'].'132';?>"  height='60' width='60' /></td>
+  <td><?= $v['nickname'];?></td>
+  <td><?= $v['area'];?></td>
+  <?php }else{ ?>
+  <td>已取消关注</td>
+  <td>已取消关注</td>
+  <td>已取消关注</td>
+  <?php } ?>
+  <td style="color:red"><?= $v['money']/100;?></td>
+  <td>
+      <button type="button" class="<?php echo $status[$v['status']]?>" ><?=$info[$v['status']];?></button>
+  </td>
+ </tr>
+ <?php }?>
+</tbody>
+</table>
+<nav>
+<?php echo $links;?>
+</nav>
+</center>
+</div>
+
+<input id = "hid_site" type="hidden" value = "<?= site_url();?>" />
+<input id = "hid_base" type="hidden" value = "<?= base_url();?>" />
+</body>
+</html>
